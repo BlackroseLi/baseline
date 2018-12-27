@@ -194,7 +194,7 @@ class DatasetForestCoverType(Dataset):
     def __init__(self):
         Dataset.__init__(self)
 
-        f1 = 'Forest_Cover_Type_train.npz'
+        f1 = './data/Forest_Cover_Type_train.npz'
         data = np.load(f1)
         traindata = data['traindata']
         trainlabel = data['trainlabel']

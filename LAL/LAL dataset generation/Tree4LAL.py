@@ -160,21 +160,28 @@ class Tree4LAL:
         # 8: number of datapoints in training
         
         f_1 = prediction_unknown[:,0]
+
         # - predicted standard deviation 
         # need to call each tree of a forest separately to get a prediction because it is not possible to get them all immediately
         f_2 = np.std(np.array([tree.predict_proba(unknown_data)[:,0] for tree in model.estimators_]), axis=0)
+
         # - proportion of positive points
         # check np.size(self.indecesKnown)
         f_3 = (sum(known_labels>0)/np.size(self.indecesKnown))*np.ones_like(f_1)
+
         # the score estimated on out of bag estimate
         f_4 = model.oob_score_*np.ones_like(f_1)
+
         # - coeficient of variance of feature importance
         # check if this is the number of features!
         f_5 = np.std(model.feature_importances_/self.dataset.trainData.shape[1])*np.ones_like(f_1)
+
         # - estimate variance of forest by looking at avergae of variance of some predictions
         f_6 = np.mean(np.std(np.array([tree.predict_proba(unknown_data)[:,0] for tree in model.estimators_]), axis=0))*np.ones_like(f_1)
+        
         # - compute the average depth of the trees in the forest
-        f_7 = np.mean(np.array([tree.tree_.max_depth for tree in model.estimators_]))*np.ones_like(f_1)            
+        f_7 = np.mean(np.array([tree.tree_.max_depth for tree in model.estimators_]))*np.ones_like(f_1)    
+                
         LALfeatures = np.concatenate(([f_1], [f_2], [f_3], [f_4], [f_5], [f_6], [f_7]), axis=0)
         
         if nFeatures>7:
