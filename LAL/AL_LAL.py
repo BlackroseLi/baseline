@@ -105,8 +105,9 @@ for i in range(nExperiments):
     exp.reset()
 
 print()    
-res.saveResults('checkerboard4x4-exp')
+res.saveResults('ForestCover-exp')
 
 res2plot = Results()
 res2plot.readResult('checkerboard4x4-exp')
 res2plot.plotResults(metrics = ['accuracy'])
+

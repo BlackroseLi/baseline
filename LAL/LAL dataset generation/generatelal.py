@@ -76,7 +76,7 @@ for n_labelled in experiment['n_labelleds']:
     else:
         all_sizes_data_for_lal = np.concatenate((all_sizes_data_for_lal, all_data_for_lal), axis=0)
         all_sizes_labels_for_lal = np.concatenate((all_sizes_labels_for_lal, all_labels_for_lal), axis=0)
-    np.savez('./lal datasets/LAL-randomtree-simulated2Gauss2dim', all_sizes_data_for_lal, all_sizes_labels_for_lal)
+    # np.savez('./lal datasets/LAL-randomtree-simulated2Gauss2dim', all_sizes_data_for_lal, all_sizes_labels_for_lal)
     
 lalModel = LALmodel(all_sizes_data_for_lal, all_sizes_labels_for_lal)
 lalModel.crossValidateLALmodel()

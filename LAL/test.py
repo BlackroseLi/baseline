@@ -12,3 +12,6 @@ regression_features = regression_data['arr_0']
 regression_labels = regression_data['arr_1']
 
 print(np.shape(regression_features))
+print(regression_features[0,:])
+print(np.shape(regression_labels))
+print(regression_labels[0:5])
