@@ -2,9 +2,6 @@ import numpy as np
 import pickle as pkl
 import scipy
 
-import sys
-sys.path.append('./Classes/')
-sys.path.append('./LAL dataset generation/')
 # import various AL strategies
 from Dataset4LAL import DatasetSimulated
 from Tree4LAL import Tree4LAL
