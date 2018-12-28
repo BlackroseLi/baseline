@@ -14,6 +14,7 @@ from Classes.dataset import DatasetCheckerboard2x2
 from Classes.dataset import DatasetCheckerboard4x4
 from Classes.dataset import DatasetRotatedCheckerboard2x2
 from Classes.dataset import DatasetStriatumMini
+from Classes.dataset import DatasetSimulatedUnbalanced
 # import the model for LAL strategy
 from Classes.lal_model import LALmodel
 # import Experiment and Result classes that will be responsible for running AL and saving the results
@@ -69,14 +70,14 @@ nExperiments = 5
 # number of estimators (random trees) in the classifier
 nEstimators = 50
 # number of labeled points at the beginning of the AL experiment
-nStart = 2
+nStart = 100
 # number of iterations in AL experiment
 nIterations = 100
 # the quality metrics computed on the test set to evaluate active learners
 quality_metrics = ['accuracy']
 
 # load dataset
-dtstcheckerboard2x2 = DatasetRotatedCheckerboard2x2()
+dtstcheckerboard2x2 = DatasetStriatumMini()
 # set the starting point
 dtstcheckerboard2x2.setStartState(nStart)
 # Active learning strategies
@@ -107,5 +108,6 @@ for i in range(nExperiments):
     # reset the experiment (including sampling a new starting state for the dataset)
     exp.reset()
 
-res.saveResults('RotatedCheckerboard2x2-exp')
+res.saveResults('WarmStriatumMini-exp')
+
 print('experiment results save done')
