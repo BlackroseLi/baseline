@@ -62,12 +62,12 @@ print('Oob score = ', lalModel2.oob_score_)
 
 # SGD
 print('Building sgd1 regression model..')
-SGD1 = SGDRegressor(loss="squared_loss", penalty="l2", alpha=0.001, max_iter=100, random_state=random.randrange(100000))
+SGD1 = SGDRegressor(loss="squared_loss", penalty="l2", alpha=0.02, max_iter=100, random_state=random.randrange(100000))
 SGD1.fit(regression_features1, regression_labels1)
 print('Done!')
 
 print('Building sgd2 regression model..')
-SGD2 = SGDRegressor(loss="squared_loss", penalty="l2", alpha=0.001, max_iter=100, random_state=random.randrange(100000))
+SGD2 = SGDRegressor(loss="squared_loss", penalty="l2", alpha=0.02, max_iter=100, random_state=random.randrange(100000))
 SGD2.fit(regression_features2, regression_labels2)
 print('Done!')
 
@@ -114,10 +114,10 @@ for i in range(nExperiments):
 
 print()
 res.saveResults('checkerboard2x2-exp')
-
-res2plot = Results()
-res2plot.readResult('checkerboard2x2-exp')
-res2plot.plotResults(metrics = ['accuracy'])
+print('checkerboard2x2-exp done')
+# res2plot = Results()
+# res2plot.readResult('checkerboard2x2-exp')
+# res2plot.plotResults(metrics = ['accuracy'])
 
 # ---------------------Running the experiment: checkerboard 4x4-------------------------------
 
@@ -147,10 +147,10 @@ for i in range(nExperiments):
 
 print()    
 res.saveResults('checkerboard4x4-exp')
-
-res2plot = Results()
-res2plot.readResult('checkerboard4x4-exp')
-res2plot.plotResults(metrics = ['accuracy'])
+print('checkerboard4x4-exp done')
+# res2plot = Results()
+# res2plot.readResult('checkerboard4x4-exp')
+# res2plot.plotResults(metrics = ['accuracy'])
 
 # -----------------------------Running the experiment: rotated checkerboard 2x2-----------------------------------------
 
@@ -181,10 +181,10 @@ for i in range(nExperiments):
 
 print()
 res.saveResults('rotated-checkerboard2x2-exp')
-
-res2plot = Results()
-res2plot.readResult('rotated-checkerboard2x2-exp')
-res2plot.plotResults(metrics = ['accuracy'])
+print('rotated-checkerboard2x2-exp done')
+# res2plot = Results()
+# res2plot.readResult('rotated-checkerboard2x2-exp')
+# res2plot.plotResults(metrics = ['accuracy'])
 
 # -----------------------------Running the experiment: mini striatum dataset------------------------------------------------
 
@@ -213,7 +213,7 @@ for i in range(nExperiments):
 
 print()
 res.saveResults('striatum-exp')
-
-res2plot = Results()
-res2plot.readResult('striatum-exp')
-res2plot.plotResults(metrics = ['IoU'])
+print('striatum-exp done')
+# res2plot = Results()
+# res2plot.readResult('striatum-exp')
+# res2plot.plotResults(metrics = ['IoU'])
