@@ -70,6 +70,7 @@ class Results:
                 plt.xlabel('# labelled points')
                 plt.ylabel(performanceMeasure)
                 lgd = plt.legend(loc='lower right')
+                plt.show()
         else:
             for performanceMeasure in metrics:
                 if performanceMeasure in self.existingMetrics:
@@ -92,6 +93,8 @@ class Results:
                     plt.xlabel('# labelled points')
                     plt.ylabel(performanceMeasure)
                     lgd = plt.legend(loc='lower right')
+                    plt.show()
+
                 else:
                     print('This metric is not implemented, existing metrics = ', self.existingMetrics)
                 

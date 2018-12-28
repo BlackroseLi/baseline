@@ -17,6 +17,8 @@ from numpy import genfromtxt
 
 # print(np.shape(trainData))
 # print(np.shape(trainLabels))
+# print(trainData[0:3])
+# print(trainLabels[0:5])
      
 
 
@@ -27,24 +29,24 @@ from numpy import genfromtxt
 # print(np.shape(testData))
 # print(np.shape(testLabels))
 
-filename2 = 'striatum_test_features_mini.mat'
-dt = sio.loadmat(filename2)
-for i in dt.keys():
-    print(i)
-    print(np.shape(dt[i]))
+# filename2 = 'striatum_test_features_mini.mat'
+# dt = sio.loadmat(filename2)
+# for i in dt.keys():
+#     print(i)
+#     print(np.shape(dt[i]))
 
-filename3 = 'striatum_test_labels_mini.mat'
-dt = sio.loadmat(filename3)
-for i in dt.keys():
-    print(i)
-    print(np.shape(dt[i]))
-print(dt.keys())
-# trainData = dt['features']
-trainLabels = dt['labels']
+# filename3 = 'striatum_test_labels_mini.mat'
+# dt = sio.loadmat(filename3)
+# for i in dt.keys():
+#     print(i)
+#     print(np.shape(dt[i]))
+# print(dt.keys())
+# # trainData = dt['features']
+# trainLabels = dt['labels']
 
-# print(np.shape(trainData))
-print(np.shape(trainLabels))
-print(trainLabels[0:1])
+# # print(np.shape(trainData))
+# print(np.shape(trainLabels))
+# print(trainLabels[0:1])
 
 # f1 = 'train.csv'
 # f2 = 'test.csv'
@@ -92,3 +94,22 @@ print(trainLabels[0:1])
 # print(np.shape(trainlabel))
 # print(trainlabel[0])
 
+filename = './binary_classification/waveform-5000_1_2.csv'
+data = genfromtxt(filename, delimiter=',', dtype=np.str)
+
+print(np.shape(data))
+
+traindata = data[0:550, 0:40].astype(np.float)
+trainlabel = [data[0:550, 40].astype(np.float)]
+trainlabel = np.transpose(trainlabel)
+trainlabel[trainlabel==-1] = 0
+testdata = data[550: , 0:8].astype(np.float)
+testlabel = data[550: , 8].astype(np.float)
+print(np.shape(traindata))
+print(np.shape(trainlabel))
+print(traindata[0:3])
+print(trainlabel[0:5])
+# print(np.shape(testdata))
+# print(np.shape(testlabel))
+# print(testdata[0])
+# print(testlabel[0])

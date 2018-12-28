@@ -3,7 +3,7 @@ from sklearn.ensemble import RandomForestRegressor
 import matplotlib.pyplot as plt
 import pickle
 import os
-os.chdir(r'D:\baseline\LAL')
+os.chdir(r'C:\Users\31236\Desktop\baseline\LAL')
 # import various AL strategies
 from Classes.active_learner import ActiveLearnerRandom
 from Classes.active_learner import ActiveLearnerUncertainty
@@ -14,7 +14,7 @@ from Classes.dataset import DatasetCheckerboard2x2
 from Classes.dataset import DatasetCheckerboard4x4
 from Classes.dataset import DatasetRotatedCheckerboard2x2
 from Classes.dataset import DatasetStriatumMini
-from Classes.dataset import DatasetSimulatedUnbalanced
+from Classes.dataset import DatasetSimulatedUnbalanced, DatasetBreast, DatasetDiabetes, Datasetwaveform_5000_1_2
 # import the model for LAL strategy
 from Classes.lal_model import LALmodel
 # import Experiment and Result classes that will be responsible for running AL and saving the results
@@ -66,7 +66,7 @@ print('Build linearRegresion regression model..')
 ## ----------------------Running the experiment: checkerboard 2x2---------------------
 
 # number of experiment repeats
-nExperiments = 5
+nExperiments = 1
 # number of estimators (random trees) in the classifier
 nEstimators = 50
 # number of labeled points at the beginning of the AL experiment
@@ -77,26 +77,26 @@ nIterations = 100
 quality_metrics = ['accuracy']
 
 # load dataset
-dtstcheckerboard2x2 = DatasetStriatumMini()
+dataset = Datasetwaveform_5000_1_2()
 # set the starting point
-dtstcheckerboard2x2.setStartState(nStart)
+dataset.setStartState(nStart)
 # Active learning strategies
-alR = ActiveLearnerRandom(dtstcheckerboard2x2, nEstimators, 'random')
-alU = ActiveLearnerUncertainty(dtstcheckerboard2x2, nEstimators, 'uncertainty')
-# alLALindepend = ActiveLearnerLAL(dtstcheckerboard2x2, nEstimators, 'lal-rand', lalModel1)
-# alLALiterative = ActiveLearnerLAL(dtstcheckerboard2x2, nEstimators, 'lal-iter', lalModel2)
+alR = ActiveLearnerRandom(dataset, nEstimators, 'random')
+alU = ActiveLearnerUncertainty(dataset, nEstimators, 'uncertainty')
+# alLALindepend = ActiveLearnerLAL(dataset, nEstimators, 'lal-rand', lalModel1)
+# alLALiterative = ActiveLearnerLAL(dataset, nEstimators, 'lal-iter', lalModel2)
 # SGD
-SGD1independ = ActiveLearnerSGD(dtstcheckerboard2x2, nEstimators,'SGD1independ', SGD1)
-SGD1iterative = ActiveLearnerSGD(dtstcheckerboard2x2, nEstimators, 'SGD2iterative', SGD2)
+SGD1independ = ActiveLearnerSGD(dataset, nEstimators,'SGD1independ', SGD1)
+SGD1iterative = ActiveLearnerSGD(dataset, nEstimators, 'SGD2iterative', SGD2)
 
 # LinearRegression
-lr1 = ActiveLearnerSGD(dtstcheckerboard2x2, nEstimators,'linearReg1', linearReg1)
-lr2 = ActiveLearnerSGD(dtstcheckerboard2x2, nEstimators,'linearReg2', linearReg2)
+lr1 = ActiveLearnerSGD(dataset, nEstimators,'linearReg1', linearReg1)
+lr2 = ActiveLearnerSGD(dataset, nEstimators,'linearReg2', linearReg2)
 
 
 als = [alR, alU, SGD1independ, SGD1iterative, lr1, lr2]
 
-exp = Experiment(nIterations, nEstimators, quality_metrics, dtstcheckerboard2x2, als,'SGD_experiment')
+exp = Experiment(nIterations, nEstimators, quality_metrics, dataset, als,'SGD_experiment')
 # the Results class helps to add, save and plot results of the experiments
 res = Results(exp, nExperiments)
 
@@ -108,6 +108,7 @@ for i in range(nExperiments):
     # reset the experiment (including sampling a new starting state for the dataset)
     exp.reset()
 
-res.saveResults('WarmStriatumMini-exp')
-
+res.saveResults('DatasetDiabetes-exp')
 print('experiment results save done')
+res.plotResults(metrics = ['accuracy'])
+
