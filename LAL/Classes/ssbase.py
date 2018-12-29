@@ -12,11 +12,11 @@ from sklearn.utils import resample
 
 class SemiSupervisedBase:
 
-    def __init__(self, method = "random"):
+    def __init__(self, filename, data, method = "random"):
         # Configuration variables.
         self.num_runs = 10 # Number of runs to average for results.
         self.num_committee = 4 # Size of the committee for QBC.
-        self.num_iterations = 11 # Number of active learning loops.
+        self.num_iterations = 3 # Number of active learning loops.
         self.label_percent = 0.1 # Percent of labeled data.
         self.test_percent = 0.2 # Percent of test data.
         self.batch_percent = 0.03 # Percent of data to add to labeled data in each loop.
@@ -26,25 +26,29 @@ class SemiSupervisedBase:
         # Read data.
         # with open("data/{}.dat".format(name), "rb") as infile:
         #     self.data = pickle.loads(infile.read())
+        # self.data = None
+        self.data = data
+        self.get_data(filename, batch_percent=0.2, label_percent=0.2, test_percent=0.2)
 
 
     def get_data(self, filename, batch_percent=0.2, label_percent=0.2, test_percent=0.2):
 
-        data = np.load(fn)
+        data = np.load(filename)
 
         regression_features = data['arr_0']
-        regression_labels = data['arr_1']
+        regression_labels = np.transpose([data['arr_1']])
 
         self.data['data'] = regression_features
         self.data['target'] = regression_labels
+        
         # Reset cache values
         self.cache = None
         # Get counts for different sets.
-        count = data.shape[0]
+        count = regression_features.shape[0]
         labeled_count = int(count * label_percent)
         test_count = int(count * test_percent)
         unlabeled_count = count - labeled_count - test_count
-        batch_count = int(count * batch_percent)
+        self.batch_count = int(count * batch_percent)
         pos_list = list(range(count))
         # Split the data into training/testing sets
         random.shuffle(pos_list)
@@ -121,19 +125,20 @@ class SemiSupervisedBase:
         # self.unlabeled_pos_list = pos_list[labeled_count:(labeled_count+unlabeled_count)]
         # self.test_pos_list = pos_list[(labeled_count+unlabeled_count):]
 
-        self.get_data('./lal datasets/LAL-randomtree-simulatedunbalanced-big.npz')
         rmse_list = []
+
+        select_results =[]
         # Use linear regression using SGD
         self.model = SGDLinear()
         for j in range(self.num_iterations):
 
             rmse = self.train()
             rmse_list.append(rmse)
-            self.update_labeled()
-
+            selectindexs = self.update_labeled()
+            select_results.append(selectindexs)
             #print("Iteration #{} {:.2f}s".format((j+1), total_time))
 
-        return np.array(rmse_list)
+        return np.array(rmse_list), select_results
 
     def train(self):
         data_X_train = self.data["data"][ self.labeled_pos_list ]
@@ -167,7 +172,7 @@ class SemiSupervisedBase:
         elif self.method == "qbc2":
             self.update_labeled_qbc2()
         elif self.method == "bemcm":
-            self.update_labeled_bemcm()
+            return self.update_labeled_bemcm()
         else:
             print("Method '{}' is unknown.".format(self.method))
             exit()
@@ -260,6 +265,7 @@ class SemiSupervisedBase:
                 eq_24[pos] += np.linalg.norm((fx - y) * x)
             eq_24[pos] /= (1.0 * len(models))
 
+        select_index = []
         for i in range(self.batch_count):
             max_change = -1
             max_pos = None
@@ -268,11 +274,12 @@ class SemiSupervisedBase:
                 if change > max_change:
                     max_pos = pos
                     max_change = change
+            select_index.append(max_pos)
             del eq_24[max_pos]
 
             self.labeled_pos_list.append(max_pos)
             self.unlabeled_pos_list.remove(max_pos)
-
+        return select_index
 
     def update_labeled_qbc(self):
         # Build the committee.
@@ -383,5 +390,51 @@ def get_root_mean_squared(y_actual, y_predict):
     return rmse
 
 if __name__ == "__main__":
-    s = SemiSupervisedBase( "bemcm")
-    s.get_data('../lal datasets/LAL-iterativetree-simulatedunbalanced-big.npz')
+    data = {'data':np.array([]),'traget':np.array([])}
+    s = SemiSupervisedBase('./lal datasets/LAL-iterativetree-simulatedunbalanced-big.npz', data, "bemcm")
+    rmse_list, select_results = s.process()
+    print(np.shape(rmse_list))
+    print(np.shape(select_results))
+    print(np.shape(rmse_list[0]))
+    print(np.shape(select_results[0]))
+
+    # print(rmse_list[0:3])
+    # print(select_results[0])
+
+    # filename = './lal datasets/LAL-iterativetree-simulatedunbalanced-big.npz'
+    # batch_percent=0.2
+    # label_percent=0.2 
+    # test_percent=0.2
+
+    # data1 = np.load(filename)
+
+    # regression_features = data1['arr_0']
+    # regression_labels = np.transpose([data1['arr_1']])
+
+    # print(type(regression_features))
+    # print(regression_features[0])
+
+    # data['data'] = regression_features
+    # data['target'] = regression_labels
+    # print(np.shape(data['data']))
+    # print(np.shape(data['target']))
+    # # Get counts for different sets.
+    # count = regression_features.shape[0]
+    # labeled_count = int(count * label_percent)
+    # test_count = int(count * test_percent)
+    # unlabeled_count = count - labeled_count - test_count
+    # batch_count = int(count * batch_percent)
+    # pos_list = list(range(count))
+    # # Split the data into training/testing sets
+    # random.shuffle(pos_list)
+    # labeled_pos_list = pos_list[:labeled_count]
+    # unlabeled_pos_list = pos_list[labeled_count:(labeled_count+unlabeled_count)]
+    # test_pos_list = pos_list[(labeled_count+unlabeled_count):]
+
+
+    # print(data['data'][labeled_pos_list].shape)
+    # print(data['target'][labeled_pos_list].shape)
+    # print(data['data'][unlabeled_pos_list].shape)
+    # print(data['target'][unlabeled_pos_list].shape)
+    # print(data['data'][test_pos_list].shape)
+    # print(data['target'][test_pos_list].shape)
