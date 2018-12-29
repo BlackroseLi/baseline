@@ -59,7 +59,9 @@ class Results:
         # add small epsilon to the denominator to avoid division by zero
         small_eps = 0.000001
         col = self._get_cmap(len(self.alearners)+1)
+        plt_list = []
         if metrics is None:
+
             for performanceMeasure in self.performanceMeasures:
                 plt.figure()
                 i = 0
@@ -70,7 +72,9 @@ class Results:
                 plt.xlabel('# labelled points')
                 plt.ylabel(performanceMeasure)
                 lgd = plt.legend(loc='lower right')
-                plt.show()
+                # plt.show()
+                plt_list.append(plt)
+            
         else:
             for performanceMeasure in metrics:
                 if performanceMeasure in self.existingMetrics:
@@ -93,12 +97,14 @@ class Results:
                     plt.xlabel('# labelled points')
                     plt.ylabel(performanceMeasure)
                     lgd = plt.legend(loc='lower right')
-                    plt.show()
-
+                    # plt.show()
+                    plt_list.append(plt)
                 else:
                     print('This metric is not implemented, existing metrics = ', self.existingMetrics)
                 
     
+        return plt_list
+        
     def _get_cmap(self, N):
         '''Returns a function that maps each index in 0, 1, ... N-1 to a distinct 
         RGB color.'''

@@ -208,6 +208,7 @@ class DatasetForestCoverType(Dataset):
         self.testData = traindata[10000:, :]
         self.testLabels = trainlabel[10000:]
 
+
 class DatasetBreast(Dataset):
 
     def __init__(self):
@@ -216,20 +217,23 @@ class DatasetBreast(Dataset):
 
         filename = './data/binary_classification/breast-w.csv'
         data = genfromtxt(filename, delimiter=',', dtype=np.str)
+        samplesindex = np.arange(np.shape(data)[0])
+        np.random.shuffle(samplesindex)
 
-        self.trainData = data[0:550, 0:9].astype(np.float)
-        trainlabel = [data[0:550, 9].astype(np.float)]
+        self.trainData = data[samplesindex[0:550], 0:9].astype(np.float)
+        trainlabel = [data[samplesindex[0:550], 9].astype(np.float)]
         self.trainLabels = np.transpose(trainlabel)
         self.trainLabels[self.trainLabels==-1] = 0
 
         scaler = preprocessing.StandardScaler().fit(self.trainData)
         self.trainData = scaler.transform(self.trainData)
 
-        self.testData = data[550: , 0:9].astype(np.float)
+        self.testData = data[samplesindex[550: ], 0:9].astype(np.float)
         self.testData = scaler.transform(self.testData)
-        testLabels = data[550: , 9].astype(np.float)
+        testLabels = data[samplesindex[550: ], 9].astype(np.float)
         self.testLabels = np.transpose(testLabels)
         self.testLabels[self.testLabels==-1] = 0
+
 
 class DatasetDiabetes(Dataset):
     
@@ -239,20 +243,23 @@ class DatasetDiabetes(Dataset):
 
         filename = './data/binary_classification/diabetes.csv'
         data = genfromtxt(filename, delimiter=',', dtype=np.str)
+        samplesindex = np.arange(np.shape(data)[0])
+        np.random.shuffle(samplesindex)
 
-        self.trainData = data[0:550, 0:8].astype(np.float)
-        trainlabel = [data[0:550, 8].astype(np.float)]
+        self.trainData = data[samplesindex[0:550], 0:8].astype(np.float)
+        trainlabel = [data[samplesindex[0:550], 8].astype(np.float)]
         self.trainLabels = np.transpose(trainlabel)
         self.trainLabels[self.trainLabels==-1] = 0
 
         scaler = preprocessing.StandardScaler().fit(self.trainData)
         self.trainData = scaler.transform(self.trainData)
 
-        self.testData = data[550: , 0:8].astype(np.float)
+        self.testData = data[samplesindex[550: ], 0:8].astype(np.float)
         self.testData = scaler.transform(self.testData)
-        testLabels = data[550: , 8].astype(np.float)
+        testLabels = data[samplesindex[550: ], 8].astype(np.float)
         self.testLabels = np.transpose(testLabels)
         self.testLabels[self.testLabels==-1] = 0
+
 
 class Datasetwaveform_5000_1_2(Dataset):
     
@@ -262,17 +269,59 @@ class Datasetwaveform_5000_1_2(Dataset):
 
         filename = './data/binary_classification/waveform-5000_1_2.csv'
         data = genfromtxt(filename, delimiter=',', dtype=np.str)
+        samplesindex = np.arange(np.shape(data)[0])
+        np.random.shuffle(samplesindex)
 
-        self.trainData = data[0:2800, 0:40].astype(np.float)
-        trainlabel = [data[0:2800, 40].astype(np.float)]
+        self.trainData = data[samplesindex[0:2800], 0:40].astype(np.float)
+        trainlabel = [data[samplesindex[0:2800], 40].astype(np.float)]
         self.trainLabels = np.transpose(trainlabel)
         self.trainLabels[self.trainLabels==-1] = 0
 
         scaler = preprocessing.StandardScaler().fit(self.trainData)
         self.trainData = scaler.transform(self.trainData)
 
-        self.testData = data[2800: , 0:40].astype(np.float)
+        self.testData = data[samplesindex[2800: ], 0:40].astype(np.float)
         self.testData = scaler.transform(self.testData)
-        testLabels = data[2800: , 40].astype(np.float)
+        testLabels = data[samplesindex[2800: ], 40].astype(np.float)
+        self.testLabels = np.transpose(testLabels)
+        self.testLabels[self.testLabels==-1] = 0
+
+        # self.trainData = data[0:2800, 0:40].astype(np.float)
+        # trainlabel = [data[0:2800, 40].astype(np.float)]
+        # self.trainLabels = np.transpose(trainlabel)
+        # self.trainLabels[self.trainLabels==-1] = 0
+
+        # scaler = preprocessing.StandardScaler().fit(self.trainData)
+        # self.trainData = scaler.transform(self.trainData)
+
+        # self.testData = data[2800: , 0:40].astype(np.float)
+        # self.testData = scaler.transform(self.testData)
+        # testLabels = data[2800: , 40].astype(np.float)
+        # self.testLabels = np.transpose(testLabels)
+        # self.testLabels[self.testLabels==-1] = 0
+
+
+class Datasetclean1(Dataset):
+    
+    def __init__(self):
+        
+        Dataset.__init__(self)
+
+        filename = './data/binary_classification/clean1.csv'
+        data = genfromtxt(filename, delimiter=',', dtype=np.str)
+        samplesindex = np.arange(np.shape(data)[0])
+        np.random.shuffle(samplesindex)
+
+        self.trainData = data[samplesindex[0:377], 0:166].astype(np.float)
+        trainlabel = [data[samplesindex[0:377], 166].astype(np.float)]
+        self.trainLabels = np.transpose(trainlabel)
+        self.trainLabels[self.trainLabels==-1] = 0
+
+        scaler = preprocessing.StandardScaler().fit(self.trainData)
+        self.trainData = scaler.transform(self.trainData)
+
+        self.testData = data[samplesindex[377: ], 0:166].astype(np.float)
+        self.testData = scaler.transform(self.testData)
+        testLabels = data[samplesindex[377: ], 166].astype(np.float)
         self.testLabels = np.transpose(testLabels)
         self.testLabels[self.testLabels==-1] = 0

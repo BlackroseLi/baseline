@@ -1,7 +1,7 @@
 import os
 print(os.getcwd())
 # os.chadir(r'C:\Users\31236\Desktop\baseline\LAL\data')
-os.chdir(r'C:\Users\31236\Desktop\baseline\LAL\data')
+os.chdir(r'D:\baseline\LAL\data')
 print(os.getcwd())
 
 import numpy as np
@@ -94,22 +94,24 @@ from numpy import genfromtxt
 # print(np.shape(trainlabel))
 # print(trainlabel[0])
 
-filename = './binary_classification/waveform-5000_1_2.csv'
+filename = './binary_classification/clean1.csv'
 data = genfromtxt(filename, delimiter=',', dtype=np.str)
-
+samplesindex = np.arange(np.shape(data)[0])
+np.random.shuffle(samplesindex)
+print(samplesindex[0:5])
 print(np.shape(data))
 
-traindata = data[0:550, 0:40].astype(np.float)
-trainlabel = [data[0:550, 40].astype(np.float)]
+traindata = data[samplesindex[0:377], 0:166].astype(np.float)
+trainlabel = [data[samplesindex[0:377], 166].astype(np.float)]
 trainlabel = np.transpose(trainlabel)
 trainlabel[trainlabel==-1] = 0
-testdata = data[550: , 0:8].astype(np.float)
-testlabel = data[550: , 8].astype(np.float)
+testdata = data[samplesindex[377: ], 0:166].astype(np.float)
+testlabel = data[samplesindex[377: ], 166].astype(np.float)
 print(np.shape(traindata))
 print(np.shape(trainlabel))
 print(traindata[0:3])
-print(trainlabel[0:5])
-# print(np.shape(testdata))
-# print(np.shape(testlabel))
-# print(testdata[0])
-# print(testlabel[0])
+print(trainlabel[0:10])
+print(np.shape(testdata))
+print(np.shape(testlabel))
+print(testdata[0])
+print(testlabel[0:10])
