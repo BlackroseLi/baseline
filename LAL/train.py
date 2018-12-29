@@ -71,7 +71,7 @@ nEstimators = 50
 # number of labeled points at the beginning of the AL experiment
 nStart = 2
 # number of iterations in AL experiment
-nIterations = 100
+nIterations = 50
 # the quality metrics computed on the test set to evaluate active learners
 quality_metrics = ['accuracy']
 
@@ -113,7 +113,7 @@ for datasetname in datasets:
     res.saveResults(datasetname)
 
     pltlist = res.plotResults(metrics = ['accuracy'])
-    i=2
+    i=3
     for p in pltlist:
         p.savefig(datasetname+str(i))
         i+=1
