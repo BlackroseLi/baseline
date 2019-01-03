@@ -56,133 +56,6 @@ class SemiSupervisedBase:
         self.unlabeled_pos_list = pos_list[labeled_count:(labeled_count+unlabeled_count)]
         self.test_pos_list = pos_list[(labeled_count+unlabeled_count):]
 
-
-
-    def get_average(self):
-        print("Start process for {} {}...".format(self.name, self.method))
-        rmse = []
-        for i in range(self.num_runs):
-            random.seed(i * 473)
-            np.random.seed(i * 473)
-            rmse.append(self.process())
-        rmse = np.array(rmse)
-
-        # Calculate Average
-        N = rmse.shape[0]
-        M = rmse.shape[1]
-        x = list(range(M))
-        y_average = np.zeros(M)
-        for i in range(N):
-            y_average += rmse[i]
-        y_average /= N
-
-        # Calculate Standard Deviation
-        y_stddev = np.zeros(M)
-        for i in range(N):
-            y_stddev += (rmse[i] - y_average) * (rmse[i] - y_average)
-        y_stddev = np.sqrt(y_stddev / N)
-
-        # Write output.
-        with open("results/{}.txt".format(self.name + "_" + self.method), "w") as outfile:
-            outfile.write("iteration\t{}\n".format(self.method))
-            for i in range(rmse.shape[0]):
-                for j in range(rmse.shape[1]):
-                    outfile.write(str(j) + "\t" + str(rmse[i, j]) + "\n")
-
-        # Build 1 stddev.
-        y_top = y_average + y_stddev
-        y_bottom = y_average - y_stddev
-
-        # Plot range
-        fig, ax = plt.subplots()
-        ax.plot(x, y_average, color="black")
-        ax.plot(x, y_top, x, y_bottom, color="black")
-        ax.fill_between(x, y_average, y_top, where=y_top>y_average, facecolor="green", alpha=0.5)
-        ax.fill_between(x, y_average, y_bottom, where=y_bottom<=y_average, facecolor="red", alpha=0.5)
-        plt.show()
-
-    def process(self):
-        """
-        This runs the the
-
-        Args:
-            None
-        Return:
-            None
-        """
-        # # Reset cache values
-        # self.cache = None
-        # # Get counts for different sets.
-        # count = self.data["data"].shape[0]
-        # labeled_count = int(count * self.label_percent)
-        # test_count = int(count * self.test_percent)
-        # unlabeled_count = count - labeled_count - test_count
-        # self.batch_count = int(count * self.batch_percent)
-        # pos_list = list(range(count))
-        # # Split the data into training/testing sets
-        # random.shuffle(pos_list)
-        # self.labeled_pos_list = pos_list[:labeled_count]
-        # self.unlabeled_pos_list = pos_list[labeled_count:(labeled_count+unlabeled_count)]
-        # self.test_pos_list = pos_list[(labeled_count+unlabeled_count):]
-
-        rmse_list = []
-
-        select_results =[]
-        # Use linear regression using SGD
-        self.model = SGDLinear()
-        for j in range(self.num_iterations):
-
-            rmse = self.train()
-            rmse_list.append(rmse)
-            selectindexs = self.update_labeled()
-            select_results.append(selectindexs)
-            #print("Iteration #{} {:.2f}s".format((j+1), total_time))
-
-        return np.array(rmse_list), select_results
-
-    def train(self):
-        data_X_train = self.data["data"][ self.labeled_pos_list ]
-        data_X_test = self.data["data"][ self.test_pos_list ]
-
-        # Split the targets into training/testing sets
-        data_y_train = self.data["target"][ self.labeled_pos_list ]
-        data_y_test = self.data["target"][ self.test_pos_list ]
-
-        # Train the model using the training sets
-        self.model.fit(train_x = data_X_train, train_y = data_y_train)
-
-        # Make predictions using the testing set
-        data_y_pred = self.model.predict(X = data_X_test)
-        #data_y_pred = self.model.predict(X = data_X_train)
-
-        # Get prediction error using mean absolute error.
-        rmse = get_root_mean_squared(data_y_test, data_y_pred)
-        #rmse = get_root_mean_squared(data_y_train, data_y_pred)
-        return rmse
-
-    def update_labeled(self):
-        if self.method == "random":
-            self.update_labeled_random()
-        # elif self.method == "greedy":
-        #     self.update_labeled_greedy()
-        # elif self.method == "greedy2":
-        #     self.update_labeled_greedy2()
-        elif self.method == "qbc":
-            self.update_labeled_qbc()
-        elif self.method == "qbc2":
-            self.update_labeled_qbc2()
-        elif self.method == "bemcm":
-            return self.update_labeled_bemcm()
-        else:
-            print("Method '{}' is unknown.".format(self.method))
-            exit()
-
-    def update_labeled_random(self):
-        self.labeled_pos_list.extend(self.unlabeled_pos_list[:self.batch_count])
-        self.unlabeled_pos_list = self.unlabeled_pos_list[self.batch_count:]
-        #print("Random Update {:.2f}s".format(total_time))
-
-    
     def sequential_select(self):
         """
         return the select index
@@ -227,7 +100,113 @@ class SemiSupervisedBase:
                 max_pos = pos
                 max_change = change
         self.labeled_pos_list.append(max_pos)
-        self.unlabeled_pos_list.remove(max_pos)       
+        self.unlabeled_pos_list.remove(max_pos)  
+
+        return max_pos
+
+    def select(self):
+
+        # Use linear regression using SGD
+        self.model = SGDLinear()
+        beforeselect_rmse = self.train()
+        selected_index = []
+        for i in range(self.batch_count):
+            s = self.sequential_select()
+            selected_index.append(s)
+
+        data_X_test = self.data["data"][ self.test_pos_list ]
+        data_y_test = self.data["target"][ self.test_pos_list ]
+        data_y_pred = self.model.predict(X = data_X_test)
+        after_rmse = get_root_mean_squared(data_y_test, data_y_pred)
+        return beforeselect_rmse, after_rmse, selected_index
+
+    def get_average(self):
+        print("Start process for {} {}...".format(self.name, self.method))
+        rmse = []
+        for i in range(self.num_runs):
+            random.seed(i * 473)
+            np.random.seed(i * 473)
+            rmse.append(self.process())
+        rmse = np.array(rmse)
+
+        # Calculate Average
+        N = rmse.shape[0]
+        M = rmse.shape[1]
+        x = list(range(M))
+        y_average = np.zeros(M)
+        for i in range(N):
+            y_average += rmse[i]
+        y_average /= N
+
+        # Calculate Standard Deviation
+        y_stddev = np.zeros(M)
+        for i in range(N):
+            y_stddev += (rmse[i] - y_average) * (rmse[i] - y_average)
+        y_stddev = np.sqrt(y_stddev / N)
+
+        # Write output.
+        with open("results/{}.txt".format(self.name + "_" + self.method), "w") as outfile:
+            outfile.write("iteration\t{}\n".format(self.method))
+            for i in range(rmse.shape[0]):
+                for j in range(rmse.shape[1]):
+                    outfile.write(str(j) + "\t" + str(rmse[i, j]) + "\n")
+
+        # Build 1 stddev.
+        y_top = y_average + y_stddev
+        y_bottom = y_average - y_stddev
+
+        # Plot range
+        fig, ax = plt.subplots()
+        ax.plot(x, y_average, color="black")
+        ax.plot(x, y_top, x, y_bottom, color="black")
+        ax.fill_between(x, y_average, y_top, where=y_top>y_average, facecolor="green", alpha=0.5)
+        ax.fill_between(x, y_average, y_bottom, where=y_bottom<=y_average, facecolor="red", alpha=0.5)
+        plt.show()
+
+    def train(self):
+        data_X_train = self.data["data"][ self.labeled_pos_list ]
+        data_X_test = self.data["data"][ self.test_pos_list ]
+
+        # Split the targets into training/testing sets
+        data_y_train = self.data["target"][ self.labeled_pos_list ]
+        data_y_test = self.data["target"][ self.test_pos_list ]
+
+        # Train the model using the training sets
+        self.model.fit(train_x = data_X_train, train_y = data_y_train)
+
+        # Make predictions using the testing set
+        data_y_pred = self.model.predict(X = data_X_test)
+        #data_y_pred = self.model.predict(X = data_X_train)
+
+        # Get prediction error using mean absolute error.
+        rmse = get_root_mean_squared(data_y_test, data_y_pred)
+        #rmse = get_root_mean_squared(data_y_train, data_y_pred)
+        return rmse
+
+    def update_labeled(self):
+        if self.method == "random":
+            self.update_labeled_random()
+        # elif self.method == "greedy":
+        #     self.update_labeled_greedy()
+        # elif self.method == "greedy2":
+        #     self.update_labeled_greedy2()
+        elif self.method == "qbc":
+            self.update_labeled_qbc()
+        elif self.method == "qbc2":
+            self.update_labeled_qbc2()
+        elif self.method == "bemcm":
+            return self.update_labeled_bemcm()
+        else:
+            print("Method '{}' is unknown.".format(self.method))
+            exit()
+
+    def update_labeled_random(self):
+        self.labeled_pos_list.extend(self.unlabeled_pos_list[:self.batch_count])
+        self.unlabeled_pos_list = self.unlabeled_pos_list[self.batch_count:]
+        #print("Random Update {:.2f}s".format(total_time))
+
+    
+   
 
     def update_labeled_bemcm(self):
         """
@@ -392,12 +371,13 @@ def get_root_mean_squared(y_actual, y_predict):
 if __name__ == "__main__":
     data = {'data':np.array([]),'traget':np.array([])}
     s = SemiSupervisedBase('./lal datasets/LAL-iterativetree-simulatedunbalanced-big.npz', data, "bemcm")
-    rmse_list, select_results = s.process()
-    print(np.shape(rmse_list))
-    print(np.shape(select_results))
-    print(np.shape(rmse_list[0]))
-    print(np.shape(select_results[0]))
+    befor_rmse, after_rmse, select_results = s.select()
 
+    print(befor_rmse)
+    print(after_rmse)
+    print(np.shape(select_results))
+    print(select_results[0])
+    
     # print(rmse_list[0:3])
     # print(select_results[0])
 
