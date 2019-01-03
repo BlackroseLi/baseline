@@ -77,6 +77,10 @@ def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_
 
 
     """
+
+    for i in range(5):
+        assert(len(label_ys[i]) == len(label_indexs[i]))
+        assert(np.shape(X) == np.shape(modelPredictions[i])) 
     n_samples, n_features = np.shape(X)
 
     current_label_data = X[label_indexs[5]]
@@ -100,9 +104,13 @@ def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_
     unlabel_cluster_centers_10 = unlabel_cluster.cluster_centers_
     unlabel_cluster_centers_10_index = np.zeros(10, dtype=int)
     
-    sorted_current_label_data = np.sort(current_label_data)
+    sorted_labelperdiction_index = np.argsort(current_prediction[label_indexs[5]])
+
+    sorted_current_label_data = current_label_data[label_indexs[5][sorted_labelperdiction_index]]
     label_10_equal = [ sorted_current_label_data[int(round(i * current_label_size))] for i in np.arange(0, 1, 0.1)]
-    label_10_equal_index = np.zeros(10, dtype=int)
+    label_10_equal_index = [label_indexs[5][sorted_labelperdiction_index][int(round(i * current_label_size))] for i in np.arange(0, 1, 0.1)]
+
+    sorted_unlabelperdiction_index = np.argsort(current_prediction[label_indexs[5]])
     sorted_current_unlabel_data = np.sort(current_label_data)
     unlabel_10_equal = [ sorted_current_unlabel_data[int(round(i * current_unlabel_size))] for i in np.arange(0, 1, 0.1)]
     unlabel_10_equal_index = np.zeros(10, dtype=int)
