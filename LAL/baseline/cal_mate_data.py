@@ -72,7 +72,7 @@ def cal_matedata(label_data, label_y, unlabel_data, modelPrediction, al5tbefor, 
 
 
 
-def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_index):
+def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_index, models):
     """
 
 
@@ -94,17 +94,33 @@ def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_
 
     label_cluster = KMeans(n_clusters=10).fit(current_label_data)
     label_cluster_centers_10 = label_cluster.cluster_centers_
-    label_cluster_centers_10_index = 
+    label_cluster_centers_10_index = np.zeros(10, dtype=int)
+
     unlabel_cluster = KMeans(n_clusters=10).fit(current_unlabel_data)
     unlabel_cluster_centers_10 = unlabel_cluster.cluster_centers_
-    unlabel_cluster_centers_10_index = 
+    unlabel_cluster_centers_10_index = np.zeros(10, dtype=int)
     
     sorted_current_label_data = np.sort(current_label_data)
     label_10_equal = [ sorted_current_label_data[int(round(i * current_label_size))] for i in np.arange(0, 1, 0.1)]
+    label_10_equal_index = np.zeros(10, dtype=int)
     sorted_current_unlabel_data = np.sort(current_label_data)
     unlabel_10_equal = [ sorted_current_unlabel_data[int(round(i * current_unlabel_size))] for i in np.arange(0, 1, 0.1)]
+    unlabel_10_equal_index = np.zeros(10, dtype=int)
 
+    for i in range(n_samples):
+        for j in range(10):
+            if(np.all(label_cluster_centers_10[j] == X[i])):
+                label_cluster_centers_10_index[j] = i
+            if(np.all(unlabel_cluster_centers_10[j] == X[i])):
+                unlabel_cluster_centers_10_index[j] = i
+            if(np.all(label_10_equal[j] == X[i])):
+                label_10_equal_index[j] = i
+            if(np.all(label_10_equal[j] == X[i])):
+                unlabel_10_equal_index[j] = i
+              
     distance_query_index = np.array()
+    lcc_sort_index = []
+    ucc_sort_index = []
     for i in query_index:
         i_lcc = []
         i_ucc = []
@@ -123,10 +139,14 @@ def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_
             i_u10e.append(np.linalg.norm(current_unlabel_data[i] - unlabel_10_equal[j]))
         
         i_lcc = minmax_scale(i_lcc)
+        i_lcc_sort_index = np.argsort(i_lcc)
+        lcc_sort_index.append(i_lcc_sort_index)
         i_ucc = minmax_scale(i_ucc)
+        i_ucc_sort_index = np.argsort(i_ucc)
+        ucc_sort_index.append(i_ucc_sort_index)
         i_l10e = minmax_scale(i_l10e)
         i_u10e = minmax_scale(i_u10e)
-        i_distance = np.hstack((i_lcc, i_ucc, i_l10e, i_u10e))
+        i_distance = np.hstack((i_lcc[i_lcc_sort_index], i_ucc[i_ucc_sort_index], i_l10e, i_u10e))
         np.vstack((distance_query_index, i_distance))
 
         
@@ -169,4 +189,20 @@ def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_
         unlabelmean.append(np.mean(i_unlabel_10_equal))
         unlabelstd.append(np.std(i_unlabel_10_equal))
 
+
+    f_x_a = []
+    f_x_b = []
+    f_x_c = []
+    f_x_d = []
+    for round in range(5):
+        predict = minmax_scale(modelPredictions[round])
+        for i in query_index:
+            for j in i_lcc_sort_index:
+                f_x_a.append(abs(predict[i] - predict[j]))
+            for j in i_ucc_sort_index:
+                f_x_b.append(abs(predict[i] - predict[j]))
+            for j in range(10):
+                f_x_c.append(abs(predict[i] - predict[label_10_equal_index[j]]))
+            for j in range(10):
+                f_x_d.append(abs(predict[i] - predict[unlabel_10_equal_index[j]]))
 
