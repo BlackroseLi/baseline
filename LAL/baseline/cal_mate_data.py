@@ -253,13 +253,14 @@ def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_
          round5_ratio_unlabel_positive, round5_ratio_unlabel_negative, unlabel_pre_10_equal, unlabelmean, unlabelstd))
     model_infor_data = model_infor * np.ones_like(n_feature_data)
 
-    f_x_a = []
-    f_x_b = []
-    f_x_c = []
-    f_x_d = []
-    for round in range(5):
-        predict = minmax_scale(modelPredictions[round])
-        for i in query_index:
+    fx_data = None
+    for i in query_index:
+        f_x_a = []
+        f_x_b = []
+        f_x_c = []
+        f_x_d = []
+        for round in range(5):
+            predict = minmax_scale(modelPredictions[round])
             for j in i_lcc_sort_index:
                 f_x_a.append(abs(predict[i] - predict[j]))
             for j in i_ucc_sort_index:
@@ -268,18 +269,22 @@ def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_
                 f_x_c.append(abs(predict[i] - predict[label_10_equal_index[j]]))
             for j in range(10):
                 f_x_d.append(abs(predict[i] - predict[unlabel_10_equal_index[j]]))
-    fx_data = np.hstack((f_x_a, f_x_b, f_x_c, f_x_d))
-    fx_data = fx_data * np.ones_like(n_feature_data)
+        fdata = np.hstack((f_x_a, f_x_b, f_x_c, f_x_d))
+        if fx_data is None:
+            fx_data = fdata
+        else:
+            fx_data = np.vstack((fx_data, fdata))
+    # fx_data = fx_data * np.ones_like(n_feature_data)
 
 
-    # print(np.shape(n_feature_data))
-    # print(np.shape(ratio_label_positive_data))
-    # print(np.shape(ratio_label_negative_data))
-    # print(np.shape(ratio_unlabel_positive_data))
-    # print(np.shape(ratio_unlabel_negative_data))
-    # print(np.shape(distance_query_data))
-    # print(np.shape(model_infor_data))
-    # print(np.shape(fx_data))
+    print(np.shape(n_feature_data))
+    print(np.shape(ratio_label_positive_data))
+    print(np.shape(ratio_label_negative_data))
+    print(np.shape(ratio_unlabel_positive_data))
+    print(np.shape(ratio_unlabel_negative_data))
+    print(np.shape(distance_query_data))
+    print(np.shape(model_infor_data))
+    print(np.shape(fx_data))
 
     metadata = np.hstack((n_feature_data, ratio_label_positive_data, ratio_label_negative_data, \
          ratio_unlabel_positive_data, ratio_unlabel_negative_data, distance_query_data, model_infor_data, fx_data))
@@ -336,6 +341,6 @@ if __name__ == "__main__":
         label_ys.append(y[labels[i]])
         models.append(model)
     
-    query_index = [i for i in range(15, 20)]
+    query_index = [i for i in range(15, 21)]
     query_index = np.array(query_index)
     meta = matedata(X, label_ys, labels, unlabels, prediction, query_index)
