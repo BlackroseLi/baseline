@@ -233,7 +233,7 @@ def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_
     round5_ratio_unlabel_negative = []
     unlabelmean = []
     unlabelstd = []   
-    for i in range(5):
+    for i in range(6):
         label_size = len(label_indexs[i])
         unlabel_size = len(unlabel_indexs[i])
 
@@ -276,20 +276,23 @@ def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_
     fx_data = None
     for i in query_index:
         f_x_a = []
-        f_x_b = []
+        # f_x_b = []
         f_x_c = []
         f_x_d = []
-        for round in range(5):
+        for round in range(6):
             predict = minmax_scale(modelPredictions[round])
-            for j in i_lcc_sort_index:
-                f_x_a.append(predict[i] - predict[j])
-            for j in i_ucc_sort_index:
-                f_x_b.append(predict[i] - predict[j])
+            # for j in i_lcc_sort_index:
+            #     f_x_a.append(predict[i] - predict[j])
+            # for j in i_ucc_sort_index:
+            #     f_x_b.append(predict[i] - predict[j])
+            for j in data_cluster_centers_10_index:
+                f_x_a.append(predict[i] - predict[data_cluster_centers_10_index[j]])
             for j in range(10):
                 f_x_c.append(predict[i] - predict[label_10_equal_index[j]])
             for j in range(10):
                 f_x_d.append(predict[i] - predict[unlabel_10_equal_index[j]])
-        fdata = np.hstack((f_x_a, f_x_b, f_x_c, f_x_d))
+        # fdata = np.hstack((f_x_a, f_x_b, f_x_c, f_x_d))
+        fdata = np.hstack((f_x_a, f_x_c, f_x_d))
         if fx_data is None:
             fx_data = fdata
         else:
