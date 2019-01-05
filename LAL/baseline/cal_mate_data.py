@@ -131,18 +131,30 @@ def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_
     ratio_unlabel_negative = (sum(current_prediction[unlabel_indexs[5]] < 0)) / current_unlabel_size
     ratio_unlabel_negative_data = ratio_unlabel_negative * np.ones_like(n_feature_data)
 
-    label_cluster = KMeans(n_clusters=10).fit(current_label_data)
-    label_cluster_centers_10 = label_cluster.cluster_centers_
-    label_cluster_centers_10_index = np.zeros(10, dtype=int)
-
-    unlabel_cluster = KMeans(n_clusters=10).fit(current_unlabel_data)
-    unlabel_cluster_centers_10 = unlabel_cluster.cluster_centers_
-    unlabel_cluster_centers_10_index = np.zeros(10, dtype=int)
     
+    # label_cluster = KMeans(n_clusters=10).fit(current_label_data)
+    # label_cluster_centers_10 = label_cluster.cluster_centers_
+    # label_cluster_centers_10_index = np.zeros(10, dtype=int)
+
+    # unlabel_cluster = KMeans(n_clusters=10).fit(current_unlabel_data)
+    # unlabel_cluster_centers_10 = unlabel_cluster.cluster_centers_
+    # unlabel_cluster_centers_10_index = np.zeros(10, dtype=int)
+
+    # the same dataset the same cluster centers
+    data_cluster = KMeans(n_clusters=10).fit(X)
+    data_cluster_centers_10 = data_cluster.cluster_centers_
+    data_cluster_centers_10_index = np.zeros(10, dtype=int)
+    # obtain the cluster centers index
+    for i in range(n_samples):
+        for j in range(10):
+            if(np.all(data_cluster_centers_10[j] == X[i])):
+                data_cluster_centers_10_index[j] = i
+    
+
     sorted_labelperdiction_index = np.argsort(current_prediction[label_indexs[5]])
     sorted_current_label_data = X[label_indexs[5][sorted_labelperdiction_index]]
     
-    label_10_equal = [ sorted_current_label_data[int(i * current_label_size)] for i in np.arange(0, 1, 0.1)]
+    label_10_equal = [sorted_current_label_data[int(i * current_label_size)] for i in np.arange(0, 1, 0.1)]
     label_10_equal_index = [label_indexs[5][sorted_labelperdiction_index][int(i * current_label_size)] for i in np.arange(0, 1, 0.1)]
 
     sorted_unlabelperdiction_index = np.argsort(current_prediction[unlabel_indexs[5]])
@@ -150,26 +162,28 @@ def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_
     # unlabel_10_equal_index = np.zeros(10, dtype=int)
     # print('current un label size', current_unlabel_size)
     # print(len())
-    unlabel_10_equal = [ sorted_current_unlabel_data[int(i * current_unlabel_size)] for i in np.arange(0, 1, 0.1)]
+    unlabel_10_equal = [sorted_current_unlabel_data[int(i * current_unlabel_size)] for i in np.arange(0, 1, 0.1)]
     unlabel_10_equal_index = [unlabel_indexs[5][sorted_unlabelperdiction_index][int(i * current_unlabel_size)] for i in np.arange(0, 1, 0.1)]
 
-    for i in range(n_samples):
-        for j in range(10):
-            if(np.all(label_cluster_centers_10[j] == X[i])):
-                label_cluster_centers_10_index[j] = i
-            if(np.all(unlabel_cluster_centers_10[j] == X[i])):
-                unlabel_cluster_centers_10_index[j] = i
-            # if(np.all(label_10_equal[j] == X[i])):
-            #     label_10_equal_index[j] = i
-            # if(np.all(label_10_equal[j] == X[i])):
-            #     unlabel_10_equal_index[j] = i
+    # for i in range(n_samples):
+    #     for j in range(10):
+    #         if(np.all(label_cluster_centers_10[j] == X[i])):
+    #             label_cluster_centers_10_index[j] = i
+    #         if(np.all(unlabel_cluster_centers_10[j] == X[i])):
+    #             unlabel_cluster_centers_10_index[j] = i
+    #         # if(np.all(label_10_equal[j] == X[i])):
+    #         #     label_10_equal_index[j] = i
+    #         # if(np.all(label_10_equal[j] == X[i])):
+    #         #     unlabel_10_equal_index[j] = i
               
     distance_query_data = None
+    cc_sort_index = []
     lcc_sort_index = []
     ucc_sort_index = []
     for i in query_index:
-        i_lcc = []
-        i_ucc = []
+        # i_lcc = []
+        # i_ucc = []
+        i_cc = []
         i_l10e = []
         i_u10e = []
 
@@ -179,22 +193,28 @@ def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_
         # f_i_u10e = []      
         for j in range(10):
             # cal the ith in query_index about 
-            i_lcc.append(np.linalg.norm(current_unlabel_data[i] - label_cluster_centers_10[j]))
-            i_ucc.append(np.linalg.norm(current_unlabel_data[i] - unlabel_cluster_centers_10[j]))
+            # i_lcc.append(np.linalg.norm(current_unlabel_data[i] - label_cluster_centers_10[j]))
+            # i_ucc.append(np.linalg.norm(current_unlabel_data[i] - unlabel_cluster_centers_10[j]))
+            i_cc.append(np.linalg.norm(current_unlabel_data[i] - data_cluster_centers_10[j]))
             i_l10e.append(np.linalg.norm(current_unlabel_data[i] - label_10_equal[j]))
             i_u10e.append(np.linalg.norm(current_unlabel_data[i] - unlabel_10_equal[j]))
         
-        i_lcc = minmax_scale(i_lcc)
-        i_lcc_sort_index = np.argsort(i_lcc)
-        lcc_sort_index.append(i_lcc_sort_index)
-        # i_lcc = np.sort(i_lcc)
-        i_ucc = minmax_scale(i_ucc)
-        i_ucc_sort_index = np.argsort(i_ucc)
-        ucc_sort_index.append(i_ucc_sort_index)
+        # i_lcc = minmax_scale(i_lcc)
+        # i_lcc_sort_index = np.argsort(i_lcc)
+        # lcc_sort_index.append(i_lcc_sort_index)
+        # # i_lcc = np.sort(i_lcc)
+        # i_ucc = minmax_scale(i_ucc)
+        # i_ucc_sort_index = np.argsort(i_ucc)
+        # ucc_sort_index.append(i_ucc_sort_index)
         # i_ucc = np.sort(i_ucc)
+
+        i_cc = minmax_scale(i_cc)
+        i_cc_sort_index = np.argsort(i_cc)
+        cc_sort_index.append(i_cc_sort_index)
         i_l10e = minmax_scale(i_l10e)
         i_u10e = minmax_scale(i_u10e)
-        i_distance = np.hstack((i_lcc[i_lcc_sort_index], i_ucc[i_ucc_sort_index], i_l10e, i_u10e))
+        # i_distance = np.hstack((i_lcc[i_lcc_sort_index], i_ucc[i_ucc_sort_index], i_l10e, i_u10e))
+        i_distance = np.hstack((i_cc[cc_sort_index], i_l10e, i_u10e))
         if distance_query_data is None:
             distance_query_data = i_distance
         else:
