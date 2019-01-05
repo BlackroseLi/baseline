@@ -262,13 +262,13 @@ def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_
         for round in range(5):
             predict = minmax_scale(modelPredictions[round])
             for j in i_lcc_sort_index:
-                f_x_a.append(abs(predict[i] - predict[j]))
+                f_x_a.append(predict[i] - predict[j])
             for j in i_ucc_sort_index:
-                f_x_b.append(abs(predict[i] - predict[j]))
+                f_x_b.append(predict[i] - predict[j])
             for j in range(10):
-                f_x_c.append(abs(predict[i] - predict[label_10_equal_index[j]]))
+                f_x_c.append(predict[i] - predict[label_10_equal_index[j]])
             for j in range(10):
-                f_x_d.append(abs(predict[i] - predict[unlabel_10_equal_index[j]]))
+                f_x_d.append(predict[i] - predict[unlabel_10_equal_index[j]])
         fdata = np.hstack((f_x_a, f_x_b, f_x_c, f_x_d))
         if fx_data is None:
             fx_data = fdata
