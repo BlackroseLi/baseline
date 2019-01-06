@@ -309,7 +309,10 @@ def matedata(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query_
 
             for j in range(10):
                 print('cc_sort_index[i][j]', cc_sort_index[k][j])
-                f_x_a.append(predict[i] - currentmodel.predict(data_cluster_centers_10[cc_sort_index[k][j]]))
+                print('data_cluster_centers_10_index[cc_sort_index[k][j]]', data_cluster_centers_10_index[cc_sort_index[k][j]])
+                f_x_a.append(predict[i] - predict[data_cluster_centers_10_index[cc_sort_index[k][j]]])
+                # f_x_a.append(predict[i] - currentmodel.predict(data_cluster_centers_10[cc_sort_index[k][j]]))
+
             for j in range(10):
                 f_x_c.append(predict[i] - predict[label_10_equal_index[j]])
             for j in range(10):
