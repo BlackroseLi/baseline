@@ -528,10 +528,6 @@ def mate_data(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query
             fx_data = np.vstack((fx_data, fdata))
         k += 1
 
-    # print('fx_data', np.shape(fx_data))
-    # fx_data = fx_data * np.ones_like(n_feature_data)
-
-
     print(np.shape(n_feature_data))
     print(np.shape(ratio_label_positive_data))
     print(np.shape(ratio_label_negative_data))
