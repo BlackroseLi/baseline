@@ -493,16 +493,8 @@ def mate_data(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query
         unlabel_pre_10_equal = np.r_[unlabel_pre_10_equal, i_unlabel_10_equal]
         unlabelmean.append(np.mean(i_unlabel_10_equal))
         unlabelstd.append(np.std(i_unlabel_10_equal))
-    # print(np.shape(ratio_fn))
-    # print(np.shape(label_pre_10_equal))
-    # print(np.shape(labelmean))
-    # print(np.shape(round5_ratio_unlabel_positive))
-    # print(np.shape(labelmean))
-    # print(np.shape(labelmean))
-    # print(np.shape(labelmean))
     model_infor = np.hstack((ratio_tp, ratio_fp, ratio_tn, ratio_fn, label_pre_10_equal, labelmean, labelstd, \
          round5_ratio_unlabel_positive, round5_ratio_unlabel_negative, unlabel_pre_10_equal, unlabelmean, unlabelstd))
-    # print('model_infor', np.shape(model_infor))
     model_infor_data = model_infor * np.ones_like(n_feature_data)
 
     fx_data = None
@@ -528,18 +520,9 @@ def mate_data(X, label_ys, label_indexs, unlabel_indexs, modelPredictions, query
             fx_data = np.vstack((fx_data, fdata))
         k += 1
 
-    print(np.shape(n_feature_data))
-    print(np.shape(ratio_label_positive_data))
-    print(np.shape(ratio_label_negative_data))
-    print(np.shape(ratio_unlabel_positive_data))
-    print(np.shape(ratio_unlabel_negative_data))
-    print(np.shape(distance_query_data))
-    print(np.shape(model_infor_data))
-    print(np.shape(fx_data))
-
     metadata = np.hstack((n_feature_data, ratio_label_positive_data, ratio_label_negative_data, \
          ratio_unlabel_positive_data, ratio_unlabel_negative_data, distance_query_data, model_infor_data, fx_data))
-    print(np.shape(metadata))
+    print('The shape of meta_data: ', np.shape(metadata))
     return metadata
 
 
