@@ -6,6 +6,7 @@ from sklearn.preprocessing import Normalizer,minmax_scale
 from sklearn.datasets import make_classification
 from sklearn.svm import SVC
 
+
 def cal_matedata(label_data, label_y, unlabel_data, modelPrediction, al5tbefor, query_index):
 
     """
