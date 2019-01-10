@@ -11,6 +11,19 @@ from sklearn.utils.validation import check_array
 from sklearn.datasets import make_classification
 from sklearn.svm import SVC
 
+from model import naive_bayes_classifier, knn_classifier, logistic_regression_classifier, \
+    random_forest_classifier, decision_tree_classifier, svm_classifier, svm_cross_validation, gradient_boosting_classifier
+
+classifiers = {'NB':naive_bayes_classifier,   
+                'KNN':knn_classifier,  
+                'LR':logistic_regression_classifier,  
+                'RF':random_forest_classifier,  
+                'DT':decision_tree_classifier,  
+                'SVM':svm_classifier,  
+            'SVMCV':svm_cross_validation,  
+                'GBDT':gradient_boosting_classifier  
+}
+
 def randperm(n, k=None):
     """Generate a random array which contains k elements range from (n[0]:n[1])
 
@@ -66,12 +79,12 @@ class DataSet():
         Label matrix of the whole dataset. It is a reference which will not use additional memory.
         
     """
-    def __init__(self, X, y):
+    def __init__(self, X, y, dataset_name):
         if not isinstance(X, (list, np.ndarray)):
             raise ValueError("")
         self.X = X
         self.y = y
-
+        self.dataset_name = dataset_name
         self.n_samples, self.n_features =  np.shape(X)
         self.distance = None
     
@@ -236,7 +249,6 @@ class DataSet():
                 ret_arr.append(np.loadtxt(os.path.join(saving_path, fname)))
         return ret_arr[0], ret_arr[1], ret_arr[2], ret_arr[3]
 
-
     def split_save(self, train_idx, test_idx, label_idx, unlabel_idx, path):
         """Save the split to file for auditting or loading for other methods.
 
@@ -255,19 +267,19 @@ class DataSet():
 
         saving_path = os.path.abspath(path)
         if os.path.isdir(saving_path):
-            np.savetxt(os.path.join(saving_path, 'train_idx.txt'), train_idx)
-            np.savetxt(os.path.join(saving_path, 'test_idx.txt'), test_idx)
+            np.savetxt(os.path.join(saving_path, self.dataset_name + '_train_idx.txt'), train_idx)
+            np.savetxt(os.path.join(saving_path, self.dataset_name + '_test_idx.txt'), test_idx)
             if len(np.shape(label_idx)) == 2:
-                np.savetxt(os.path.join(saving_path, 'label_idx.txt'), label_idx)
-                np.savetxt(os.path.join(saving_path, 'unlabel_idx.txt'), unlabel_idx)
+                np.savetxt(os.path.join(saving_path, self.dataset_name + '_label_idx.txt'), label_idx)
+                np.savetxt(os.path.join(saving_path, self.dataset_name + '_unlabel_idx.txt'), unlabel_idx)
             else:
-                np.save(os.path.join(saving_path, 'label_idx.npy'), label_idx)
-                np.save(os.path.join(saving_path, 'unlabel_idx.npy'), unlabel_idx)
+                np.save(os.path.join(saving_path, self.dataset_name + '_label_idx.npy'), label_idx)
+                np.save(os.path.join(saving_path, self.dataset_name + '_unlabel_idx.npy'), unlabel_idx)
         else:
             raise Exception("A path to a directory is expected.")
 
 
-def mate_data(X, y, label_indexs, unlabel_indexs, modelPredictions, query_index):
+def mate_data(X, y, distance, cluster_center_index, label_indexs, unlabel_indexs, modelPredictions, query_index):
     """Calculate the meta data according to the current model,dataset and five rounds before information.
 
 
@@ -278,6 +290,12 @@ def mate_data(X, y, label_indexs, unlabel_indexs, modelPredictions, query_index)
 
     y:  {list, np.ndarray}
         The true label of the each round of iteration,corresponding to label_indexs.
+    
+    distance: 2D
+        distance[i][j] reprensts the distance between X[i] and X[j].
+
+    cluster_center_index: np.ndarray
+        The index corresponding to the samples which is the result of cluster in origin data set.  
 
     label_indexs: {list, np.ndarray} shape=(number_iteration, corresponding_label_index)
         The label indexs of each round of iteration,
@@ -324,23 +342,22 @@ def mate_data(X, y, label_indexs, unlabel_indexs, modelPredictions, query_index)
 
 
     # the same dataset the same cluster centers
-    data_cluster = KMeans(n_clusters=10, random_state=0).fit(X)
-    data_origin_cluster_centers_10 = data_cluster.cluster_centers_
-    closest_distance_data_cluster_centers_10 = np.zeros(10) + np.infty
-    data_cluster_centers_10_index = np.zeros(10, dtype=int) - 1
+    # data_cluster = KMeans(n_clusters=10, random_state=0).fit(X)
+    # data_origin_cluster_centers_10 = data_cluster.cluster_centers_
+    # closest_distance_data_cluster_centers_10 = np.zeros(10) + np.infty
+    # data_cluster_centers_10_index = np.zeros(10, dtype=int) - 1
 
-    # obtain the cluster centers index
-    for i in range(n_samples):
-        for j in range(10):
-            distance = np.linalg.norm(X[i] - data_origin_cluster_centers_10[j])
-            if distance < closest_distance_data_cluster_centers_10[j]:
-                closest_distance_data_cluster_centers_10[j] = distance
-                data_cluster_centers_10_index[j] = i
+    # # obtain the cluster centers index
+    # for i in range(n_samples):
+    #     for j in range(10):
+    #         distance = np.linalg.norm(X[i] - data_origin_cluster_centers_10[j])
+    #         if distance < closest_distance_data_cluster_centers_10[j]:
+    #             closest_distance_data_cluster_centers_10[j] = distance
+    #             data_cluster_centers_10_index[j] = i
 
-    data_cluster_centers_10 = X[data_cluster_centers_10_index]
+    data_cluster_centers_10 = X[cluster_center_index]
     if(np.any(data_cluster_centers_10_index == -1)):
         raise IndexError("data_cluster_centers_10_index is wrong")
-    print('data_cluster_centers_10_index', data_cluster_centers_10_index)
     
     sorted_labelperdiction_index = np.argsort(current_prediction[label_indexs[5]])
     sorted_current_label_data = X[label_indexs[5][sorted_labelperdiction_index]]
@@ -363,9 +380,12 @@ def mate_data(X, y, label_indexs, unlabel_indexs, modelPredictions, query_index)
         i_u10e = []
         for j in range(10):
             # cal the ith in query_index about 
-            i_cc.append(np.linalg.norm(X[i] - data_cluster_centers_10[j]))
-            i_l10e.append(np.linalg.norm(X[i] - label_10_equal[j]))
-            i_u10e.append(np.linalg.norm(X[i] - unlabel_10_equal[j]))
+            # i_cc.append(np.linalg.norm(X[i] - data_cluster_centers_10[j]))
+            # i_l10e.append(np.linalg.norm(X[i] - label_10_equal[j]))
+            # i_u10e.append(np.linalg.norm(X[i] - unlabel_10_equal[j]))
+            i_cc.append(distance[i][cluster_center_index[j]])
+            i_l10e.append(distance[i][label_10_equal_index[j]])
+            i_u10e.append(distance[i][unlabel_10_equal_index[j]])
 
         i_cc = minmax_scale(i_cc)
         i_cc_sort_index = np.argsort(i_cc)
@@ -452,7 +472,7 @@ def mate_data(X, y, label_indexs, unlabel_indexs, modelPredictions, query_index)
 if __name__ == "__main__":
     X, y = make_classification(n_samples=100, n_features=5, n_classes=2)
     y[y==0] = -1
-    d = DataSet(X, y)
+    d = DataSet(X, y, 'test')
     cd, cdi = d.get_cluster_center()
 
     train, test, l_ind, u_ind = d.split_data(split_count=6)
@@ -477,7 +497,3 @@ if __name__ == "__main__":
     query_index = [i for i in range(15, 21)]
     query_index = np.array(query_index)
     meta = mate_data(X, y, l_ind, u_ind, prediction, query_index)
-
-
-
-    
