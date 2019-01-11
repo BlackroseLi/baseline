@@ -27,7 +27,7 @@ def logistic_regression_classifier(train_x, train_y):
 # Random Forest Classifier  
 def random_forest_classifier(train_x, train_y):  
     from sklearn.ensemble import RandomForestClassifier  
-    model = RandomForestClassifier(n_estimators=8)  
+    model = RandomForestClassifier(n_estimators=20)  
     model.fit(train_x, train_y)  
     return model  
   

@@ -1,13 +1,14 @@
 import os
-print(os.getcwd())
-# os.chadir(r'C:\Users\31236\Desktop\baseline\LAL\data')
-os.chdir(r'D:\baseline\LAL\data')
-print(os.getcwd())
+# print(os.getcwd())
+# os.chadir(r'C:\Users\31236\Desktop\baseline\data')
+# # os.chdir(r'D:\baseline\LAL\data')
+# print(os.getcwd())
 
 import numpy as np
 import scipy
 import scipy.io as sio
 from numpy import genfromtxt
+import h5py
 
 # filename = r'rotated_checkerboard2x2_train.npz'
 # dt = np.load(filename)
@@ -94,24 +95,37 @@ from numpy import genfromtxt
 # print(np.shape(trainlabel))
 # print(trainlabel[0])
 
-filename = './binary_classification/clean1.csv'
-data = genfromtxt(filename, delimiter=',', dtype=np.str)
-samplesindex = np.arange(np.shape(data)[0])
-np.random.shuffle(samplesindex)
-print(samplesindex[0:5])
-print(np.shape(data))
+# filename = './binary_classification/clean1.csv'
+# data = genfromtxt(filename, delimiter=',', dtype=np.str)
+# samplesindex = np.arange(np.shape(data)[0])
+# np.random.shuffle(samplesindex)
+# print(samplesindex[0:5])
+# print(np.shape(data))
 
-traindata = data[samplesindex[0:377], 0:166].astype(np.float)
-trainlabel = [data[samplesindex[0:377], 166].astype(np.float)]
-trainlabel = np.transpose(trainlabel)
-trainlabel[trainlabel==-1] = 0
-testdata = data[samplesindex[377: ], 0:166].astype(np.float)
-testlabel = data[samplesindex[377: ], 166].astype(np.float)
+# traindata = data[samplesindex[0:377], 0:166].astype(np.float)
+# trainlabel = [data[samplesindex[0:377], 166].astype(np.float)]
+# trainlabel = np.transpose(trainlabel)
+# trainlabel[trainlabel==-1] = 0
+# testdata = data[samplesindex[377: ], 0:166].astype(np.float)
+# testlabel = data[samplesindex[377: ], 166].astype(np.float)
+# print(np.shape(traindata))
+# print(np.shape(trainlabel))
+# print(traindata[0:3])
+# print(trainlabel[0:10])
+# print(np.shape(testdata))
+# print(np.shape(testlabel))
+# print(testdata[0])
+# print(testlabel[0:10])
+
+filename = r'C:\Users\31236\Desktop\baseline\data\australian.mat'
+dt = h5py.File(filename,'r')
+for i in dt.keys():
+    print(i)
+    print(np.shape(dt[i]))
+print(dt.keys())
+
+traindata = np.transpose(dt['x'])
+trainlabel = np.transpose(dt['y'])
+
 print(np.shape(traindata))
 print(np.shape(trainlabel))
-print(traindata[0:3])
-print(trainlabel[0:10])
-print(np.shape(testdata))
-print(np.shape(testlabel))
-print(testdata[0])
-print(testlabel[0:10])

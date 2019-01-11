@@ -79,13 +79,13 @@ class DataSet():
         Label matrix of the whole dataset. It is a reference which will not use additional memory.
         
     """
-    def __init__(self, X, y, dataset_name):
+    def __init__(self, X=None, y=None, dataset_name, dataset_path):
         if not isinstance(X, (list, np.ndarray)):
             raise ValueError("")
         self.X = X
         self.y = y
         self.dataset_name = dataset_name
-        self.n_samples, self.n_features =  np.shape(X)
+        self.n_samples, self.n_features = np.shape(X)
         self.distance = None
     
     def get_cluster_center(self, n_clusters=10, method='Euclidean'):
@@ -474,6 +474,7 @@ if __name__ == "__main__":
     y[y==0] = -1
     d = DataSet(X, y, 'test')
     cd, cdi = d.get_cluster_center()
+    distance = d.get_distance()
 
     train, test, l_ind, u_ind = d.split_data(split_count=6)
 
@@ -490,10 +491,10 @@ if __name__ == "__main__":
     for i in range(6):
         model = SVC()
         model.fit(X[l_ind[i]], y[l_ind[i]])
-        prediction.append(model.predict(X))
+        prediction.append(model.predict_proba(X))
         decision_value.append(model.decision_function(X))
         models.append(model)
     
     query_index = [i for i in range(15, 21)]
     query_index = np.array(query_index)
-    meta = mate_data(X, y, l_ind, u_ind, prediction, query_index)
+    meta = mate_data(X, y, distance, cdi, l_ind, u_ind, prediction, query_index)
