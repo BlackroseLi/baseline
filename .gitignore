@@ -4,6 +4,8 @@ Reviews_ Learning Active Learning from Data_files
 LALmodel1
 LALmodel2
 *.p
+
 *.mat
 *.txt
 *.csv
+*.pyc

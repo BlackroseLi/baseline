@@ -3,7 +3,9 @@ Meta features designing for binary classification tasks
  in the pool based active learning scenario.
 """
 import os
+import h5py
 import numpy as np 
+
 from sklearn.cluster import KMeans
 from sklearn.metrics import confusion_matrix
 from sklearn.preprocessing import Normalizer,minmax_scale
@@ -20,7 +22,7 @@ classifiers = {'NB':naive_bayes_classifier,
                 'RF':random_forest_classifier,  
                 'DT':decision_tree_classifier,  
                 'SVM':svm_classifier,  
-            'SVMCV':svm_cross_validation,  
+                'SVMCV':svm_cross_validation,  
                 'GBDT':gradient_boosting_classifier  
 }
 
@@ -79,14 +81,27 @@ class DataSet():
         Label matrix of the whole dataset. It is a reference which will not use additional memory.
         
     """
-    def __init__(self, X=None, y=None, dataset_name, dataset_path):
-        if not isinstance(X, (list, np.ndarray)):
-            raise ValueError("")
-        self.X = X
-        self.y = y
+    def __init__(self, dataset_name, dataset_path=None, X=None, y=None):   
         self.dataset_name = dataset_name
-        self.n_samples, self.n_features = np.shape(X)
+        if dataset_path:
+            self.get_dataset(dataset_path)
+        elif (X is not None) and (y is not None) :
+            self.X = X
+            self.y = y
+        else:
+            raise ValueError("Please input dataset_path or X, y")
+        self.n_samples, self.n_features = np.shape(self.X)
         self.distance = None
+    
+    def get_dataset(self, dataset_path):
+        """
+        Get the dataset by name.
+        The dataset format is *.mat.
+        """
+        filename = dataset_path + self.dataset_name +'.mat'
+        dt = h5py.File(filename, 'r')
+        self.X = np.transpose(dt['x'])
+        self.y = np.transpose(dt['y'])
     
     def get_cluster_center(self, n_clusters=10, method='Euclidean'):
         """Use the Kmeans in sklearn to get the cluster centers.
@@ -102,18 +117,18 @@ class DataSet():
         index_cluster_centers: np.ndarray
             The index corresponding to the samples in origin data set.     
         """
-        if self.distance is None:
-            self.get_distance()
+        # if self.distance is None:
+        #     self.get_distance()
         data_cluster = KMeans(n_clusters=n_clusters, random_state=0).fit(self.X)
         data_origin_cluster_centers = data_cluster.cluster_centers_
         closest_distance_data_cluster_centers = np.zeros(n_clusters) + np.infty
         index_cluster_centers = np.zeros(n_clusters, dtype=int) - 1
-
+ 
         # obtain the cluster centers index
         for i in range(self.n_samples):
             for j in range(n_clusters):
                 if method == 'Euclidean':
-                    distance = np.linalg.norm(X[i] - data_origin_cluster_centers[j])
+                    distance = np.linalg.norm(self.X[i] - data_origin_cluster_centers[j])
                     if distance < closest_distance_data_cluster_centers[j]:
                         closest_distance_data_cluster_centers[j] = distance
                         index_cluster_centers[j] = i
@@ -121,7 +136,7 @@ class DataSet():
         if(np.any(index_cluster_centers == -1)):
             raise IndexError("data_cluster_centers_index is wrong")
 
-        return X[index_cluster_centers], index_cluster_centers
+        return self.X[index_cluster_centers], index_cluster_centers
 
     def get_distance(self, method='Euclidean'):
         """
@@ -180,7 +195,7 @@ class DataSet():
             index of unlabeling set, shape like [n_split_count, n_unlabeling_indexes]
         """
         # check parameters
-        len_of_parameters = [len(self.X) if X is not None else None, len(self.y) if y is not None else None]
+        len_of_parameters = [len(self.X) if self.X is not None else None, len(self.y) if self.y is not None else None]
         number_of_instance = np.unique([i for i in len_of_parameters if i is not None])
         if len(number_of_instance) > 1:
             raise ValueError("Different length of instances and _labels found.")
@@ -206,8 +221,8 @@ class DataSet():
             label_idx.append(tp_train[0:cutpoint])
             unlabel_idx.append(tp_train[cutpoint:])
 
-        self.split_save(train_idx=train_idx, test_idx=test_idx, label_idx=label_idx,
-                unlabel_idx=unlabel_idx, path=saving_path)
+        # self.split_save(train_idx=train_idx, test_idx=test_idx, label_idx=label_idx,
+        #         unlabel_idx=unlabel_idx, path=saving_path)
         return train_idx, test_idx, label_idx, unlabel_idx
 
     def split_load(self, path):
@@ -305,8 +320,10 @@ def mate_data(X, y, distance, cluster_center_index, label_indexs, unlabel_indexs
 
     modelPredictions: {list, np.ndarray} shape=(number_iteration, corresponding_perdiction)
 
-
     query_index: {list, np.ndarray}
+        The unlabel samples will be queride,and calculate the performance improvement after add to the labelset.
+
+    query_index: int
         The unlabel samples will be queride,and calculate the performance improvement after add to the labelset.
 
     Returns
@@ -314,7 +331,8 @@ def mate_data(X, y, distance, cluster_center_index, label_indexs, unlabel_indexs
     metadata: 2D array
         The meta data about the current model and dataset.
     """
-
+    if(np.any(cluster_center_index == -1)):
+        raise IndexError("cluster_center_index is wrong")
     for i in range(6):
         assert(np.shape(X)[0] == np.shape(modelPredictions[i])[0]) 
         if(not isinstance(label_indexs[i], np.ndarray)):
@@ -356,8 +374,7 @@ def mate_data(X, y, distance, cluster_center_index, label_indexs, unlabel_indexs
     #             data_cluster_centers_10_index[j] = i
 
     data_cluster_centers_10 = X[cluster_center_index]
-    if(np.any(data_cluster_centers_10_index == -1)):
-        raise IndexError("data_cluster_centers_10_index is wrong")
+
     
     sorted_labelperdiction_index = np.argsort(current_prediction[label_indexs[5]])
     sorted_current_label_data = X[label_indexs[5][sorted_labelperdiction_index]]
@@ -413,7 +430,8 @@ def mate_data(X, y, distance, cluster_center_index, label_indexs, unlabel_indexs
     for i in range(6):
         label_size = len(label_indexs[i])
         unlabel_size = len(unlabel_indexs[i])
-        cur_prediction = modelPredictions[i]
+        # cur_prediction = modelPredictions[i]
+        cur_prediction = np.array([1 if k>0 else -1 for k in modelPredictions[i]])
         label_ind = label_indexs[i]
         unlabel_ind = unlabel_indexs[i]
 
@@ -451,7 +469,7 @@ def mate_data(X, y, distance, cluster_center_index, label_indexs, unlabel_indexs
         for round in range(6):
             predict = minmax_scale(modelPredictions[round])
             for j in range(10):
-                f_x_a.append(predict[i] - predict[data_cluster_centers_10_index[cc_sort_index[k][j]]])
+                f_x_a.append(predict[i] - predict[cluster_center_index[cc_sort_index[k][j]]])
             for j in range(10):
                 f_x_c.append(predict[i] - predict[label_10_equal_index[j]])
             for j in range(10):
@@ -468,33 +486,224 @@ def mate_data(X, y, distance, cluster_center_index, label_indexs, unlabel_indexs
     print('The shape of meta_data: ', np.shape(metadata))
     return metadata
 
+def mate_data_1(X, y, distance, cluster_center_index, label_indexs, unlabel_indexs, modelOutput, query_index):
+    """Calculate the meta data according to the current model,dataset and five rounds before information.
+
+
+    Parameters
+    ----------
+    X: 2D array
+        Feature matrix of the whole dataset. It is a reference which will not use additional memory.
+
+    y:  {list, np.ndarray}
+        The true label of the each round of iteration,corresponding to label_indexs.
+    
+    distance: 2D
+        distance[i][j] reprensts the distance between X[i] and X[j].
+
+    cluster_center_index: np.ndarray
+        The index corresponding to the samples which is the result of cluster in origin data set.  
+
+    label_indexs: {list, np.ndarray} shape=(number_iteration, corresponding_label_index)
+        The label indexs of each round of iteration,
+
+    unlabel_indexs: {list, np.ndarray} shape=(number_iteration, corresponding_unlabel_index)
+        The unlabel indexs of each round of iteration,
+
+    modelOutput: {list, np.ndarray} shape=(number_iteration, corresponding_perdiction)
+
+    query_index: int
+        The unlabel sample will be queride,and calculate the performance improvement after add to the labelset.
+        
+    Returns
+    -------
+    metadata: 1d-array
+        The meta data about the current model and dataset.
+    """
+    if(np.any(cluster_center_index == -1)):
+        raise IndexError("cluster_center_index is wrong")
+    for i in range(5):
+        assert(np.shape(X)[0] == np.shape(modelOutput[i])[0]) 
+        if(not isinstance(label_indexs[i], np.ndarray)):
+            label_indexs[i] = np.array(label_indexs[i])
+        if(not isinstance(unlabel_indexs[i], np.ndarray)):
+            unlabel_indexs[i] = np.array(unlabel_indexs[i])
+    
+    n_samples, n_feature = np.shape(X)
+
+    current_label_size = len(label_indexs[5])
+    current_label_y = y[label_indexs[5]]
+    current_unlabel_size = len(unlabel_indexs[5])
+    current_prediction = modelOutput[5]
+
+    ratio_label_positive = (sum(current_label_y > 0)) / current_label_size
+    ratio_label_negative = (sum(current_label_y < 0)) / current_label_size
+
+    ratio_unlabel_positive = (sum(current_prediction[unlabel_indexs[5]] > 0)) / current_unlabel_size
+    ratio_unlabel_negative = (sum(current_prediction[unlabel_indexs[5]] < 0)) / current_unlabel_size
+
+    sorted_labelperdiction_index = np.argsort(current_prediction[label_indexs[5]])
+    sorted_current_label_data = X[label_indexs[5][sorted_labelperdiction_index]]
+    
+    label_10_equal_index = [label_indexs[5][sorted_labelperdiction_index][int(i * current_label_size)] for i in np.arange(0, 1, 0.1)]
+
+    sorted_unlabelperdiction_index = np.argsort(current_prediction[unlabel_indexs[5]])
+    sorted_current_unlabel_data = X[unlabel_indexs[5][sorted_unlabelperdiction_index]]
+    unlabel_10_equal_index = [unlabel_indexs[5][sorted_unlabelperdiction_index][int(i * current_unlabel_size)] for i in np.arange(0, 1, 0.1)]
+     
+    cc = []
+    l10e = []
+    u10e = []
+    for j in range(10):
+        cc.append(distance[query_index][cluster_center_index[j]])
+        l10e.append(distance[query_index][label_10_equal_index[j]])
+        u10e.append(distance[query_index][unlabel_10_equal_index[j]])
+
+    cc = minmax_scale(cc)
+    cc_sort_index = np.argsort(cc)
+    l10e = minmax_scale(l10e)
+    u10e = minmax_scale(u10e)
+    distance_query_data = np.hstack((cc[cc_sort_index], l10e, u10e))
+
+    ratio_tn = []
+    ratio_fp = []
+    ratio_fn = []
+    ratio_tp = []
+    label_pre_10_equal = []
+    labelmean = []
+    labelstd = []
+    unlabel_pre_10_equal = []
+    round5_ratio_unlabel_positive = []
+    round5_ratio_unlabel_negative = []
+    unlabelmean = []
+    unlabelstd = []   
+    for i in range(6):
+        label_size = len(label_indexs[i])
+        unlabel_size = len(unlabel_indexs[i])
+        # cur_prediction = modelOutput[i]
+        cur_prediction = np.array([1 if k>0 else -1 for k in modelOutput[i]])
+        label_ind = label_indexs[i]
+        unlabel_ind = unlabel_indexs[i]
+
+        tn, fp, fn, tp = confusion_matrix(y[label_ind], cur_prediction[label_ind], labels=[-1, 1]).ravel()
+        ratio_tn.append(tn / label_size)
+        ratio_fp.append(fp / label_size)
+        ratio_fn.append(fn / label_size)
+        ratio_tp.append(tp / label_size)
+
+        sort_label_pred = np.sort(minmax_scale(modelOutput[i][label_ind]))
+        i_label_10_equal = [sort_label_pred[int(i * label_size)] for i in np.arange(0, 1, 0.1)]
+        label_pre_10_equal = np.r_[label_pre_10_equal, i_label_10_equal]
+        labelmean.append(np.mean(i_label_10_equal))
+        labelstd.append(np.std(i_label_10_equal))
+
+        round5_ratio_unlabel_positive.append((sum(current_prediction[unlabel_ind] > 0)) / unlabel_size)
+        round5_ratio_unlabel_negative.append((sum(current_prediction[unlabel_ind] < 0)) / unlabel_size)
+        sort_unlabel_pred = np.sort(minmax_scale(modelOutput[i][unlabel_ind]))
+        i_unlabel_10_equal = [sort_unlabel_pred[int(i * unlabel_size)] for i in np.arange(0, 1, 0.1)]
+        unlabel_pre_10_equal = np.r_[unlabel_pre_10_equal, i_unlabel_10_equal]
+        unlabelmean.append(np.mean(i_unlabel_10_equal))
+        unlabelstd.append(np.std(i_unlabel_10_equal))
+    model_infor = np.hstack((ratio_tp, ratio_fp, ratio_tn, ratio_fn, label_pre_10_equal, labelmean, labelstd, \
+         round5_ratio_unlabel_positive, round5_ratio_unlabel_negative, unlabel_pre_10_equal, unlabelmean, unlabelstd))
+
+    f_x_a = []
+    f_x_c = []
+    f_x_d = []
+    # print('data_cluster_centers_10_index[cc_sort_index[k]]', data_cluster_centers_10_index[cc_sort_index[k]])
+    for round in range(6):
+        model_output = minmax_scale(modelOutput[round])
+        for j in range(10):
+            f_x_a.append(model_output[query_index] - model_output[cluster_center_index[cc_sort_index[j]]])
+        for j in range(10):
+            f_x_c.append(model_output[query_index] - model_output[label_10_equal_index[j]])
+        for j in range(10):
+            f_x_d.append(model_output[query_index] - model_output[unlabel_10_equal_index[j]])
+    fdata = np.hstack((current_prediction[query_index], f_x_a, f_x_c, f_x_d))
+
+    metadata = np.hstack((n_feature, ratio_label_positive, ratio_label_negative, \
+         ratio_unlabel_positive, ratio_unlabel_negative, distance_query_data, model_infor, fdata))
+    return metadata
+
+
+def model_select(modelname, k):
+    """
+    Parameters
+    ----------
+    modelname: str
+        The name of model.
+        'KNN', 'LR', 'RF', 'DT', 'SVM','SVMCV', 'GBDT'
+
+    k: int
+        The k`th group parameters corresponding to the model.
+        Suppose each group has 10 parameters.
+    Returns
+    -------
+    model: sklearn model
+        The model in sklearn with corresponding parameters.
+    """
+
+    if modelname not in ['KNN', 'LR', 'RF', 'DT', 'SVM','SVMCV', 'GBDT']:
+        raise ValueError("There is no " + modelname)
+
+    if modelname == 'SVM':
+        from sklearn.svm import SVC  
+        model = SVC(kernel='rbf', probability=True)
+        return model
+
+    if modelname == 'LR':
+        from sklearn.linear_model import LogisticRegression  
+        model = LogisticRegression(penalty='l2') 
+        return model  
+
+    if modelname == 'KNN':
+        from sklearn.neighbors import KNeighborsClassifier  
+        model = KNeighborsClassifier()   
+        return model 
+
 
 if __name__ == "__main__":
-    X, y = make_classification(n_samples=100, n_features=5, n_classes=2)
+
+
+    X, y = make_classification(n_samples=1000, n_features=5, n_classes=2)
     y[y==0] = -1
-    d = DataSet(X, y, 'test')
+    d = DataSet(X=X, y=y, dataset_name='test')
     cd, cdi = d.get_cluster_center()
     distance = d.get_distance()
 
     train, test, l_ind, u_ind = d.split_data(split_count=6)
 
-    print(np.shape(train))
-    print(np.shape(l_ind))
+    # print(np.shape(train))
+    # print(np.shape(l_ind))
 
-    print(np.shape(u_ind))
-    print(l_ind[5])
+    # print(np.shape(u_ind))
+    # print(l_ind[5])
     
     models = []
     decision_value = []
     prediction = []
 
+    # model = SVC(probability=True)
+    # model.fit(X[l_ind[0]], y[l_ind[0]])
+
+    # pre = model.predict_proba(X)
+    # print(np.shape(pre))
+    # print(np.shape(pre[:, 1]))
+    # de = model.decision_function(X)
+    # print(np.shape(de))
+    # print(pre[0:5, 1])
+    # print(pre[0:5, 0])
+    # print(de[0:5])
+    
+    # print(np.shape(de[:, 1]))
+
     for i in range(6):
         model = SVC()
         model.fit(X[l_ind[i]], y[l_ind[i]])
-        prediction.append(model.predict_proba(X))
+        # prediction.append(model.predict_proba(X)[:, 1])
         decision_value.append(model.decision_function(X))
         models.append(model)
     
-    query_index = [i for i in range(15, 21)]
+    query_index = [30]
     query_index = np.array(query_index)
-    meta = mate_data(X, y, distance, cdi, l_ind, u_ind, prediction, query_index)
+    meta = mate_data_1(X, y, distance, cdi, l_ind, u_ind, decision_value, 50)

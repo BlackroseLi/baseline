@@ -117,7 +117,9 @@ import h5py
 # print(testdata[0])
 # print(testlabel[0:10])
 
-filename = r'C:\Users\31236\Desktop\baseline\data\australian.mat'
+# filename = 'C:\\Users\\31236\\Desktop\\baseline\\data\\australian.mat'
+dataset_path = 'C:\\Users\\31236\\Desktop\\baseline\\data\\'
+filename = dataset_path + 'australian' +'.mat'
 dt = h5py.File(filename,'r')
 for i in dt.keys():
     print(i)

@@ -77,7 +77,7 @@ def read_data(data_file):
     test_x = test.drop('Cover_Type', axis=1)
     return train_x, train_y, test_x, test_y
 
-test_classifiers = [ 'KNN', 'LR', 'RF', 'DT', 'SVM','SVMCV', 'GBDT']  
+test_classifiers = ['KNN', 'LR', 'RF', 'DT', 'SVM','SVMCV', 'GBDT']  
 classifiers = {'NB':naive_bayes_classifier,   
                 'KNN':knn_classifier,  
                 'LR':logistic_regression_classifier,  
