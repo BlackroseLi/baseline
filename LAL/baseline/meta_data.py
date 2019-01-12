@@ -610,7 +610,6 @@ def mate_data_1(X, y, distance, cluster_center_index, label_indexs, unlabel_inde
     f_x_a = []
     f_x_c = []
     f_x_d = []
-    # print('data_cluster_centers_10_index[cc_sort_index[k]]', data_cluster_centers_10_index[cc_sort_index[k]])
     for round in range(6):
         model_output = minmax_scale(modelOutput[round])
         for j in range(10):
@@ -625,41 +624,127 @@ def mate_data_1(X, y, distance, cluster_center_index, label_indexs, unlabel_inde
          ratio_unlabel_positive, ratio_unlabel_negative, distance_query_data, model_infor, fdata))
     return metadata
 
-
-def model_select(modelname, k):
+def model_select(modelname):
     """
     Parameters
     ----------
     modelname: str
         The name of model.
-        'KNN', 'LR', 'RF', 'DT', 'SVM','SVMCV', 'GBDT'
+        'KNN', 'LR', 'RFC', 'RFR', 'DTC', 'DTR', 'SVM', 'GBDT'
 
-    k: int
-        The k`th group parameters corresponding to the model.
-        Suppose each group has 10 parameters.
     Returns
     -------
     model: sklearn model
         The model in sklearn with corresponding parameters.
     """
 
-    if modelname not in ['KNN', 'LR', 'RF', 'DT', 'SVM','SVMCV', 'GBDT']:
+    if modelname not in ['KNN', 'LR', 'RFC', 'RFR', 'DTC', 'DTR', 'SVM', 'GBDT']:
         raise ValueError("There is no " + modelname)
 
-    if modelname == 'SVM':
-        from sklearn.svm import SVC  
-        model = SVC(kernel='rbf', probability=True)
-        return model
+    if modelname == 'KNN':
+        from sklearn.neighbors import KNeighborsClassifier 
+        models = []
+        n_neighbors_parameter = [5, 8, 11, 14, 17, 20]
+        algorithm_parameter = ['auto', 'ball_tree', 'kd_tree', 'brute']
+        leaf_size_parameter = [20, 25, 30, 35, 40, 45, 50]
+        p_parameter = [1, 2, 3]
+        for n in n_neighbors_parameter:
+            for a in algorithm_parameter:
+                for l in leaf_size_parameter:
+                    for p in p_parameter:
+                        models.append(KNeighborsClassifier(n_neighbors=n, algorithm=a, leaf_size=l, p=p))
+        return models 
 
     if modelname == 'LR':
-        from sklearn.linear_model import LogisticRegression  
-        model = LogisticRegression(penalty='l2') 
-        return model  
+        from sklearn.linear_model import LogisticRegression
+        models = []
+        # penalty_parameter = ['l1', 'l2']
+        C_parameter = [1e-2, 1e-1, 0.5, 1, 1.5]
+        tol_parameter = [1e-5, 1e-4, 1e-3]
+        solver_parameter = ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
+        max_iter_parameter  = [50, 100, 150, 200]
+        for c in C_parameter:
+            for t in tol_parameter:
+                for s in solver_parameter:
+                    for m in max_iter_parameter:
+                        models.append(LogisticRegression(C=c, tol=t, solver=s, max_iter=m))
+        return models
 
-    if modelname == 'KNN':
-        from sklearn.neighbors import KNeighborsClassifier  
-        model = KNeighborsClassifier()   
-        return model 
+    if modelname == 'RFC':
+        from sklearn.ensemble import RandomForestClassifier
+        models = []
+        n_estimators_parameter = [10, 40, 70, 110, 150, 200, 250, 300]
+        max_features_parameter = ['auto', 'sqrt', 'log2', None]
+        for n in n_estimators_parameter:
+            for m in max_features_parameter:
+                models.append(RandomForestClassifier(n_estimators=n, max_features=m))
+        return models
+    
+    if modelname == 'RFR':
+        from sklearn.ensemble import RandomForestRegressor
+        models = []
+        n_estimators_parameter = [10, 40, 70, 110, 150, 200, 250, 300]
+        max_features_parameter = ['auto', 'sqrt', 'log2', None]
+        for n in n_estimators_parameter:
+            for m in max_features_parameter:
+                models.append(RandomForestRegressor(n_estimators=n, max_features=m))
+        return models
+    
+    if modelname == 'DTC':
+        from sklearn.tree import DecisionTreeClassifier
+        models = []
+        splitter_parameter = ['best', 'random']
+        max_features_parameter = ['auto', 'sqrt', 'log2', None]
+        for s in splitter_parameter:
+            for m in max_features_parameter:
+                models.append(DecisionTreeClassifier(splitter=s, max_features=m))
+        return models
+
+    if modelname == 'DTR':
+        from sklearn.tree import DecisionTreeRegressor
+        models = []
+        splitter_parameter = ['best', 'random']
+        max_features_parameter = ['auto', 'sqrt', 'log2', None]
+        for s in splitter_parameter:
+            for m in max_features_parameter:
+                models.append(DecisionTreeRegressor(splitter=s, max_features=m))
+        return models   
+
+    if modelname == 'SVM':
+        from sklearn.svm import SVC
+        models = []
+        C_parameter = [1e-2, 1e-1, 0.5, 1, 1.5]
+        kernel_parameter = ['linear', 'poly', 'rbf', 'sigmoid']
+        degree_parameter = [2, 3, 4, 5]
+        tol_parameter = [1e-5, 1e-4, 1e-3]
+        for c in C_parameter:
+            for k in kernel_parameter:
+                for d in degree_parameter:
+                    for t in tol_parameter:
+                        models.append(SVC(C=c ,kernel=k, degree=d, tol=t, probability=True))
+        return models
+
+
+    if modelname == 'GBDT':
+        from sklearn.ensemble import GradientBoostingClassifier
+        models = []
+        loss_parameter = ['deviance', 'exponential']
+        learning_rate_parameter = [0.02, 0.05, 0.1, 0.15]
+        n_estimators_parameter = [40, 70, 110, 150, 200, 250, 300]
+        max_depth_parameter = [2, 3, 5]
+        max_features_parameter = ['auto', 'sqrt', 'log2', None]
+        for l in loss_parameter:
+            for le in learning_rate_parameter:
+                for n in n_estimators_parameter:
+                    for md in max_depth_parameter:
+                        for mf in max_features_parameter:
+                            models.append(GradientBoostingClassifier(loss=l, learning_rate=le, n_estimators=n, max_depth=md, max_features=mf))
+        return models    
+
+
+
+
+
 
 
 if __name__ == "__main__":
